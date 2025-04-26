@@ -8,13 +8,14 @@ public class AlarmSystem : MonoBehaviour
     [SerializeField] private AudioClip _clip;
     [SerializeField] private SecurityZone _securityZone;
 
-    private Coroutine _coroutineIncrease;
-    private Coroutine _coroutineReduce;
+    private Coroutine _coroutine;
     private WaitForSeconds _wait;
     private float _delay = 0.4f;
-    private float _step = 0.05f;
-    private float _maxValueVolue = 1.0f;
+    private float _step = 0.06f;
+    private int _maxValueVolue = 1;
+    private int _minValueVolue = 0;
     private float _currentValueVolue = 0;
+    private bool _isEnableSiren = false;
 
     private void Awake()
     {
@@ -34,60 +35,46 @@ public class AlarmSystem : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_coroutineIncrease != null)
-        {
-            StopCoroutine(_coroutineIncrease);
-        }
-
-        if (_coroutineReduce != null)
-        {
-            StopCoroutine(_coroutineReduce);
-        }
-
         _securityZone.EnteredThief -= EnableSiren;
         _securityZone.ExitedThief -= DisableSiren;
     }
 
     private void EnableSiren()
     {
-        if (_coroutineReduce != null)
-        {
-            StopCoroutine(_coroutineReduce);
-        }
-
-        _coroutineIncrease = StartCoroutine(IncreaseVolumeOfSiren());
         _audioSource.Play();
+        _isEnableSiren = true;
+        _coroutine = StartCoroutine(ChangeVolumeOfSiren());
     }
 
     private void DisableSiren()
     {
-        if (_coroutineIncrease != null)
-        {
-            StopCoroutine(_coroutineIncrease);
-        }
-
-        _coroutineIncrease = StartCoroutine(ReduceVolumeOfSiren());
+        _isEnableSiren = false;
     }
 
-    private IEnumerator IncreaseVolumeOfSiren()
+    private IEnumerator ChangeVolumeOfSiren()
     {
-        while (_currentValueVolue <= _maxValueVolue)
+        bool isWork = enabled;
+
+        while (isWork)
         {
             yield return _wait;
-            _currentValueVolue += _step;
-            _audioSource.volume = _currentValueVolue;
-        }
-    }
 
-    private IEnumerator ReduceVolumeOfSiren()
-    {
-        while (_currentValueVolue >= 0)
-        {
-            yield return _wait;
-            _currentValueVolue -= _step;
-            _audioSource.volume = _currentValueVolue;
-        }
+            if (_isEnableSiren)
+            {
+                _currentValueVolue = Mathf.Min(_currentValueVolue + _step, _maxValueVolue);
+            }
+            else
+            {
+                _currentValueVolue = Mathf.Max(_currentValueVolue - _step, _minValueVolue);
+            }
 
-        _audioSource.Stop();
+            _audioSource.volume = _currentValueVolue;
+
+            if (_currentValueVolue == 0)
+            {
+                _audioSource.Stop();
+                StopCoroutine(_coroutine);
+            }
+        }
     }
 }
