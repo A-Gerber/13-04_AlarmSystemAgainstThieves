@@ -556,7 +556,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2542adca69acbf43b8624b035e301bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentSpeed: 1
+  _currentSpeed: 2
   _waypoints:
   - {fileID: 228621308}
   - {fileID: 2040776196}

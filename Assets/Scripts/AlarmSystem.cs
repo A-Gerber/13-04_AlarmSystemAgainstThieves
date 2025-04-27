@@ -10,12 +10,10 @@ public class AlarmSystem : MonoBehaviour
 
     private Coroutine _coroutine;
     private WaitForSeconds _wait;
-    private float _delay = 0.4f;
-    private float _step = 0.06f;
-    private int _maxValueVolue = 1;
-    private int _minValueVolue = 0;
-    private float _currentValueVolue = 0;
-    private bool _isEnableSiren = false;
+    private float _delay = 0.2f;
+    private float _step = 10.0f;
+    private float _maxValueVolue = 1;
+    private float _minValueVolue = 0;
 
     private void Awake()
     {
@@ -24,7 +22,12 @@ public class AlarmSystem : MonoBehaviour
 
         _audioSource.clip = _clip;
         _audioSource.loop = true;
-        _audioSource.volume = _currentValueVolue;
+        _audioSource.volume = 0;
+    }
+
+    private void Start()
+    {
+        _audioSource.Play();
     }
 
     private void OnEnable()
@@ -41,40 +44,30 @@ public class AlarmSystem : MonoBehaviour
 
     private void EnableSiren()
     {
-        _audioSource.Play();
-        _isEnableSiren = true;
-        _coroutine = StartCoroutine(ChangeVolumeOfSiren());
+        if(_coroutine != null)
+        {
+            StopCoroutine(_coroutine);
+        }
+
+        _coroutine = StartCoroutine(ChangeVolumeOfSiren(_maxValueVolue));
     }
 
     private void DisableSiren()
     {
-        _isEnableSiren = false;
+        if (_coroutine != null)
+        {
+            StopCoroutine(_coroutine);
+        }
+
+        _coroutine = StartCoroutine(ChangeVolumeOfSiren(_minValueVolue));
     }
 
-    private IEnumerator ChangeVolumeOfSiren()
+    private IEnumerator ChangeVolumeOfSiren(float targetValue)
     {
-        bool isWork = enabled;
-
-        while (isWork)
+        while (_audioSource.volume != targetValue)
         {
             yield return _wait;
-
-            if (_isEnableSiren)
-            {
-                _currentValueVolue = Mathf.Min(_currentValueVolue + _step, _maxValueVolue);
-            }
-            else
-            {
-                _currentValueVolue = Mathf.Max(_currentValueVolue - _step, _minValueVolue);
-            }
-
-            _audioSource.volume = _currentValueVolue;
-
-            if (_currentValueVolue == 0)
-            {
-                _audioSource.Stop();
-                StopCoroutine(_coroutine);
-            }
+            _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, targetValue, _step * Time.deltaTime);
         }
     }
 }
